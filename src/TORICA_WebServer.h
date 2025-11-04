@@ -5,18 +5,51 @@
 
 #include <Arduino.h>
 
-#ifdef ARDUINO_ARCH_RP2040 //RP2040及びRP2350のチェックに対応
-#include <FreeRTOS.h>
-#include <task.h>
-#endif
-
-#include <WiFi.h>
 #include <DNSServer.h>
-#include <WebServer.h>
+#if defined(ESP32) || defined(LIBRETINY)
+#include <AsyncTCP.h>
+#include <WiFi.h>
+#elif defined(ESP8266)
+#include <ESP8266WiFi.h>
+#include <ESPAsyncTCP.h>
+#elif defined(TARGET_RP2040) || defined(TARGET_RP2350) || defined(PICO_RP2040) || defined(PICO_RP2350)
+#include <RPAsyncTCP.h>
+#include <WiFi.h>
+#endif
+#include "ESPAsyncWebServer.h"
 
 struct data {
   char label[64];
   char content[32];
+};
+
+namespace TORICA_WebMonitor_Namespace {
+
+  static AsyncWebServer server(80);
+  static AsyncWebSocket ws("/ws");
+
+  const byte DNS_PORT = 53;
+  const IPAddress AP_IP = IPAddress(198, 168, 4, 1);
+  const IPAddress NET_MSK = IPAddress(255, 255, 255, 0);
+}
+
+class CaptiveRequestHandler : public AsyncWebHandler {
+public:
+  bool canHandle(__unused AsyncWebServerRequest *request) const override {
+    return true;
+  }
+
+  void handleRequest(AsyncWebServerRequest *request) {
+    AsyncResponseStream *response = request->beginResponseStream("text/html");
+    response->print("<!DOCTYPE html><html><head><title>Captive Portal</title></head><body>");
+    response->print("<p>This is our captive portal front page.</p>");
+    response->printf("<p>You were trying to reach: http://%s%s</p>", request->host().c_str(), request->url().c_str());
+#if SOC_WIFI_SUPPORTED || CONFIG_ESP_WIFI_REMOTE_ENABLED || LT_ARD_HAS_WIFI
+    response->printf("<p>Try opening <a href='http://%s'>this link</a> instead</p>", WiFi.softAPIP().toString().c_str());
+#endif
+    response->print("</body></html>");
+    request->send(response);
+  }
 };
 
 template <size_t DATA_SIZE>
