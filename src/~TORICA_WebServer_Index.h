@@ -1,8 +1,7 @@
 // WebページのHTML
+#pragma once
 
-#ifndef INDEX_H
-#define INDEX_H
-
+namespace TORICA_WebMonitor_Namespace {
 const char html[] = R"(
 
 <!DOCTYPE html>
@@ -215,4 +214,4 @@ const char html[] = R"(
 
 )";
 
-#endif // INDEX_H
+} // namespace TORICA_WebMonitor_Namespace
