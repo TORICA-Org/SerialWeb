@@ -1,8 +1,8 @@
-#include <TORICA_WebServer.h>
+#include <TORICA_SerialWeb.h>
 
 void setup() {
   Serial.begin(115200);
-  WebMonitor.begin("torica", "12345678");
+  WebMonitor.begin("TORICA", "12345678");
 }
 
 void loop() {
