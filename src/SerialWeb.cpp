@@ -1,8 +1,12 @@
-#include "TORICA_WebServer.h"
+#include "SerialWeb.h"
 
 namespace WMNamespace { // Namespaceの開始
 
+#ifdef TORICA
+  INCBIN(html, "assets/TORICA_index.html"); // HTMLファイルをバイナリとして埋め込む
+#else
   INCBIN(html, "assets/index.html"); // HTMLファイルをバイナリとして埋め込む
+#endif
 
   AsyncWebServer WMClass::server(80); // HTTPサーバーインスタンスの定義
   AsyncWebSocket WMClass::ws("/ws"); // WebSocketエンドポイントの設定
@@ -83,7 +87,25 @@ namespace WMNamespace { // Namespaceの開始
   }
 
   void WMClass::send (const char *label, const char *value) {
-    String message = String("{\"label\":\"") + String(label) + String("\",\"content\":\"") + String(value) + String("\"}"); // JSON形式のメッセージ作成
+    int dataIndex = -1;
+    for (int i = 0; i < sizeof(labels)/sizeof(labels[0]); i++) {
+      if (labels[i] == nullptr) { // 未登録のラベルを見つけた場合
+        labels[i] = strdup(label); // ラベルをコピーして登録
+        dataIndex = i; // データインデックスを設定
+        Serial.printf("Registered new label: %s at index %d\n", label, i);
+        break; // ループを抜ける
+      }
+      else if (strcmp(labels[i], label) == 0) { // 既存のラベルを見つけた場合
+        dataIndex = i; // 既存のラベルのインデックスを設定
+        Serial.printf("Found existing label: %s at index %d\n", label, i);
+        break; // ループを抜ける
+      }
+    }
+    if (dataIndex == -1) {
+      Serial.println("Error: No available slot for new label.");
+      return; // ラベル登録に失敗した場合は終了
+    }
+    String message = String("{\"index\":\"") + String(dataIndex) + String("\",\"label\":\"") + String(label) + String("\",\"content\":\"") + String(value) + String("\"}"); // JSON形式のメッセージ作成
     ws.textAll(message); // すべてのクライアントにメッセージ送信
   }
 
