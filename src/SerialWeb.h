@@ -42,7 +42,7 @@ namespace WMNamespace {
       const IPAddress AP_IP = IPAddress(198, 168, 4, 1);
       const IPAddress NET_MSK = IPAddress(255, 255, 255, 0);
 
-      char *labels[100] = {nullptr};
+      char *labels[99] = {nullptr};
   };
 
   extern WMClass WebMonitor;

@@ -54,6 +54,7 @@
     gap: 5px;
   }
   #logWindow {
+    font-family: monospace;
     margin: 10px 0 5px 0;
     padding: 10px;
     border: 1px solid black;
@@ -72,7 +73,7 @@
 </style>
 
 <body>
-  <p id='constantMessage'></p>
+  <h1>SerialWeb</h1>
   <div id='tabBar'>
     <div id='dashboardTab' onclick='changeTab(this.id)'>Dashboard</div>
     <div id='logTab' onclick='changeTab(this.id)'>Log</div>
@@ -89,6 +90,7 @@
     </div>
   </div>
 
+  <script src='demo.js' type='text/javascript'></script>
   <script type='text/javascript'>
     // グローバル変数として websocket を保持
     let websocket;
@@ -141,16 +143,6 @@
       }
     }
 
-    function testlog() {
-      for (let i = 0; i < 5; i++) {
-        addLog(`Test log message ${i + 1}`);
-      }
-    }
-
-    setInterval(() => {
-      testlog();
-    }, 1000);
-
     function updateDashbordItem(index, label, value) {
       const dashboardWrapper = document.getElementById('dashboardWrapper'); // ダッシュボード要素を取得
       const itemDiv = document.createElement('div'); // 新しいdiv要素を作成
@@ -200,6 +192,18 @@
 
     // ページが読み込まれたら、最初の接続を開始する
     //window.addEventListener('load', initWebSocket);
+
+    
+    function testlog() {
+      for (let i = 0; i < 5; i++) {
+        addLog(`Test log message ${i + 1}`);
+
+      }
+    }
+
+    setInterval(() => {
+      testlog();
+    }, 1000);
   </script>
 </body>
 </html>
