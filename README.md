@@ -1,2 +1,2 @@
-# TORICA_WebServer_Library
+# SerialWeb
 キャプティブポータルをデバッグモニターとして用いるためのライブラリです．
