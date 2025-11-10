@@ -58,22 +58,51 @@
   }
   #dashboardWrapper {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     justify-content: center;
     gap: 7px;
   }
   #dashboardWrapper > div {
+    display: flex;
+    gap: 5px;
     border: gray solid 1px;
     border-radius: 5px;
     padding: 5px;
-    max-width: 200px;
+    min-width: 100px;
+    flex-grow: 1;
+  }
+  #dashboardWrapper > div.update {
+    animation-duration: 200ms;
+    animation-name: update;
+  }
+  @keyframes update {
+    from {
+      box-shadow: 0px 0px 2px 2px gold;
+    }
+    to {
+      box-shadow: none;
+    }
   }
   #dashboardWrapper div .label {
-    margin-left: 5px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-basis: 50%;
+    text-align: center;
+    background-color: #EEE;
+    border-radius: 5px;
+    padding: 10px 5px;
     font-weight: bold;
   }
   #dashboardWrapper div .value {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-basis: 50%;
     text-align: center;
+    padding: 10px 5px;
   }
   #logWindow {
     font-family: monospace;
@@ -300,6 +329,11 @@
         dashboardWrapper.appendChild(itemDiv); // アイテムdivをダッシュボードに追加
       }
 
+      const itemDiv = document.getElementById(index);
+      itemDiv.classList.add('update');
+      setTimeout(() => {
+        itemDiv.classList.remove('update');
+      }, 200);
       const labelDiv = document.getElementById(`label${index}`);
       const valueDiv = document.getElementById(`value${index}`);
       labelDiv.textContent = label; // ラベルテキストを設定

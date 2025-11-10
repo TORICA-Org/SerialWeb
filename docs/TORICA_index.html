@@ -58,16 +58,18 @@
   }
   #dashboardWrapper {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     justify-content: center;
     gap: 7px;
   }
   #dashboardWrapper > div {
+    display: flex;
+    gap: 5px;
     border: gray solid 1px;
     border-radius: 5px;
     padding: 5px;
-    max-width: 200px;
-    max-width: 200px;
+    min-width: 100px;
+    flex-grow: 1;
   }
   #dashboardWrapper > div.update {
     animation-duration: 200ms;
@@ -82,13 +84,25 @@
     }
   }
   #dashboardWrapper div .label {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-basis: 50%;
+    text-align: center;
     background-color: #EEE;
     border-radius: 5px;
-    padding: 10px;
+    padding: 10px 5px;
     font-weight: bold;
   }
   #dashboardWrapper div .value {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-basis: 50%;
     text-align: center;
+    padding: 10px 5px;
   }
   #logWindow {
     font-family: monospace;
