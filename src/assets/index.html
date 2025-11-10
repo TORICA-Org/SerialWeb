@@ -11,6 +11,10 @@
     font-family: sans-serif;
     padding: 20px;
   }
+  h1 {
+    font-size: xx-large;
+    text-align: center;
+  }
   svg {
     display: block;
     margin: 20px auto;
@@ -34,10 +38,13 @@
     border-radius: 10px 10px 0 0;
     background-color: white;
     position: relative;
-    z-index: 10;
+    z-index: 50;
   }
   #tabBar div:active {
     background-color: #DDD;
+  }
+  #tabBar .active {
+    z-index: 100;
   }
   .content {
     position: relative;
@@ -47,28 +54,79 @@
     padding: 20px;
     border: 3px solid silver;
     border-radius: 0 10px 10px 10px;
-    z-index: 0;
+    z-index: 50;
   }
   #dashboardWrapper {
     display: flex;
-    gap: 5px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 7px;
+  }
+  #dashboardWrapper > div {
+    border: gray solid 1px;
+    border-radius: 5px;
+    padding: 5px;
+    max-width: 200px;
+  }
+  #dashboardWrapper div .label {
+    margin-left: 5px;
+    font-weight: bold;
+  }
+  #dashboardWrapper div .value {
+    text-align: center;
   }
   #logWindow {
     font-family: monospace;
-    margin: 10px 0 5px 0;
+    margin: 0;
     padding: 10px;
     border: 1px solid black;
     height: 200px;
     overflow-y: scroll;
     background-color: #f9f9f9;
-    height: 500px;
+    border: slategray 1px solid;
+    height: 400px;
   }
-  #logControls {
+  #logWindow div {
+    padding: 3px 5px;
+  }
+  #logWindow div:nth-child(odd) {
+    background-color: #e9e9e9;
+  }
+  #statusWrapper {
+    background-color: #EEE;
+    border: gray solid 1px;
+    border-radius: 0 0 5px 5px;
+    margin: -1px 0 7px 0;
+    padding: 5px;
+}
+  #logForm {
+    margin-top: 7px;
     display: flex;
-    gap: 10px;
+    gap: 5px;
   }
   #logInput {
+    padding: 6px;
+    font-family: monospace;
+    border: slategray 1px solid;
+    border-radius: 5px;
     flex: 1;
+  }
+  .checkboxWrapper {
+    display: inline-block;
+    cursor: pointer;
+  }
+  button {
+    padding: 6px 12px;
+    font-weight: bold;
+    cursor: pointer;
+    border: slategray 1px solid;
+    border-radius: 5px;
+  }
+  button:active {
+    background-color: #DDD;
+  }
+  button.active {
+    box-shadow: inset 0 2px 5px black;
   }
 </style>
 
@@ -81,19 +139,72 @@
   <div id='dashboardWrapper' class='content'></div>
   <div id='logWrapper' class='content'>
     <div id='logWindow'></div>
-    <input type='checkbox' id='pauseLog'></input><label for='pauseLog'> Pause Log</label>
-    <input type='checkbox' id='autoScroll' checked></input><label for='autoScroll'> Auto Scroll</label>
-    <input type='checkbox' id='logTimestamps' checked></input><label for='logTimestamps'> Show Timestamps</label><br>
-    <div id='logControls'>
+    <div id='statusWrapper'>Status: <span id='status'></span></div>
+    <button id='connectButton'>Connect/Disconnect</button>
+    <button id='pauseButton'>Pause</button>
+    <button id='clearButton'>Clear</button>
+    <div class = 'checkboxWrapper'>
+      <input type='checkbox' id='autoScroll' checked></input><label for='autoScroll'> Auto Scroll</label>
+      <input type='checkbox' id='logTimestamps' checked></input><label for='logTimestamps'> Show Timestamps</label><br>
+    </div>
+    <form id='logForm'>
       <input type='text' id='logInput' placeholder='Type a message...' />
       <button id='logSendButton'>Send</button>
-    </div>
+    </form>
   </div>
 
   <script src='demo.js' type='text/javascript'></script>
   <script type='text/javascript'>
-    // グローバル変数として websocket を保持
-    let websocket;
+    let ws; // グローバル変数として websocket を保持
+    const status = document.getElementById('status'); // ステータスを表示するdiv要素
+    const connectButton = document.getElementById('connectButton'); // 
+
+    function initWebSocket() { // WebSocket接続の初期化（または再接続）
+      addLog('Attempting to connect WebSocket...');
+      ws = new WebSocket(`ws://${location.hostname}/ws`);// ポート80はHTTPのデフォルトなので、:80 は省略可能
+      status.textContent = 'Connecting...';
+      status.style.color = 'black';
+
+      ws.onopen = () => { // 接続成功時の処理
+        addLog('WebSocket connected');
+        status.textContent = 'Connected';
+        status.style.color = 'green';
+        connectButton.textContent = 'Disconnect';
+      };
+
+      ws.onclose = () => { // 切断時の処理
+        addLog('WebSocket disconnected.');
+        status.textContent = 'Disconnected';
+        status.style.color = 'darkorange';
+        connectButton.textContent = 'Connect';
+      };
+
+      ws.onmessage = (event) => { // メッセージ受信時の処理
+        addLog(`Received: ${event.data}`);
+        // jsonデータのパース
+        const data = JSON.parse(event.data);
+        updateDashbordItem(data.index, data.label, data.value);
+      };
+
+      ws.onerror = (event) => {
+        console.error('WebSocket Error: ', event);
+        // エラー時も onclose が呼ばれることが多いので、再接続は onclose に任せる
+        status.textContent = 'Error';
+        status.style.color = 'red';
+      };
+    }
+
+    // ページが読み込まれたら、最初の接続を開始する
+    window.addEventListener('load', initWebSocket);
+
+    connectButton.addEventListener('click', () => {
+      if (status.textContent === 'Disconnected') {
+        initWebSocket();
+      }
+      else {
+        ws.close(1000, 'User requested disconnect');
+      }
+    });
 
     // タブの切り替え処理
     function changeTab(selectedTabId) {
@@ -104,11 +215,11 @@
       //console.log(logWrapper);
       const tabs = document.getElementById('tabBar').children; // タブバーの子要素を取得
       for (let i = 0; i < tabs.length; i++) {
-        tabs[i].style.zIndex = 0; // すべてのタブの zIndex をリセット
+        tabs[i].classList.remove('active'); // 子クラスからクラスを消去
       }
-      document.getElementById(selectedTabId).style.zIndex = 10; // 選択されたタブの zIndex を上げる
+      document.getElementById(selectedTabId).classList.add('active'); // 選択されたタブにクラスを付与
       if (selectedTabId === 'dashboardTab') {
-        dashboardWrapper.style.display = 'block'; // ダッシュボードを表示
+        dashboardWrapper.style.display = 'flex'; // ダッシュボードを表示
         logWrapper.style.display = 'none'; // ログラッパーを非表示
       } else if (selectedTabId === 'logTab') {
         dashboardWrapper.style.display = 'none'; // ダッシュボードを非表示
@@ -116,6 +227,22 @@
       }
     }
     changeTab('dashboardTab'); // 初期表示はダッシュボードタブ
+
+    // ログ一時停止ボタンのイベントリスナー設定
+    let paused = false; // 一時停止状態を示すフラグ
+    const pauseButton = document.getElementById('pauseButton');
+    pauseButton.addEventListener('click', () => { // 一時停止ボタンのクリックイベントリスナーを設定
+      const pauseLog = document.getElementById('pauseLog');
+      paused = !paused; // 一時停止状態をトグル
+      pauseButton.classList.toggle('active'); // クラスの付与状態をトグル
+    });
+
+    // ログ消去ボタンのイベントリスナー設定
+    const clearButton = document.getElementById('clearButton');
+    clearButton.addEventListener('click', () => { // クリアボタンのクリックイベントリスナーを設定
+      const logWindow = document.getElementById('logWindow'); // ログウィンドウ要素を取得
+      logWindow.innerHTML = ''; // ログウィンドウの内容をクリア
+    });
 
     // オートスクロールのチェックボックスのイベントリスナーを設定
     const autoScroll = document.getElementById('autoScroll');
@@ -129,81 +256,72 @@
     // ログを表示するヘルパー関数
     const MAX_LOG_ENTRIES = 500;
     function addLog(message) {
-      const pauseLog = document.getElementById('pauseLog').checked; // ログ一時停止のチェック状態を取得
-      if (pauseLog) return; // ログ一時停止が有効なら、何もしない
+      if (paused) return; // 一時停止が有効ならreturn
+
       const logWindow = document.getElementById('logWindow'); // ログウィンドウ要素を取得
       const logTimestampsChecked = document.getElementById('logTimestamps').checked; // タイムスタンプ表示のチェック状態を取得
-      const timestamp = logTimestampsChecked ? `[${new Date().toLocaleTimeString()}] ` : ''; // タイムスタンプを生成
-      logWindow.innerHTML += `${timestamp}${message}<br>`; // メッセージをログウィンドウに追加
+
+      const now = new Date();
+      const timestamp = logTimestampsChecked 
+        ? `[${now.toLocaleTimeString()}:${now.getMilliseconds().toString().padStart(3, '0')}] ` 
+        : '';
+      
+      const logEntry = document.createElement('div'); // 新しいdiv要素を作成
+      logEntry.textContent = timestamp + message; // ログメッセージを設定
+      logWindow.appendChild(logEntry); // ログウィンドウにログエントリを追加
+
       if (autoScroll.checked) {
         logWindow.scrollTop = logWindow.scrollHeight; // オートスクロールが有効なら、スクロール位置を最下部に設定
       }
-      while (logWindow.children.length > MAX_LOG_ENTRIES) {
-        logWindow.removeChild(logWindow.firstChild);
+      while (logWindow.children.length > MAX_LOG_ENTRIES) { // ログの数がMAX_LOG_ENTRIES未満になるまで繰り返し
+        logWindow.removeChild(logWindow.firstChild); // 最初の（一番古い）ログを消去
       }
     }
 
+    // ダッシュボードアイテムを更新する関数
     function updateDashbordItem(index, label, value) {
-      const dashboardWrapper = document.getElementById('dashboardWrapper'); // ダッシュボード要素を取得
-      const itemDiv = document.createElement('div'); // 新しいdiv要素を作成
-      itemDiv.style.border = '1px solid black'; // 枠線を設定
-      itemDiv.style.padding = '10px'; // パディングを設定
-      itemDiv.style.minWidth = '100px'; // 最小幅を設定
-      itemDiv.style.textAlign = 'center'; // テキストを中央揃えに設定
+      if (paused) return; // ログ一時停止が有効ならreturn
 
-      const labelDiv = document.createElement('div'); // ラベル用のdiv要素を作成
-      labelDiv.textContent = label; // ラベルテキストを設定
-      labelDiv.style.fontWeight = 'bold'; // ラベルを太字に設定
+      if (document.getElementById(index) === null) {
+        const dashboardWrapper = document.getElementById('dashboardWrapper'); // ダッシュボード要素を取得
+        const itemDiv = document.createElement('div'); // 新しいdiv要素を作成
+        itemDiv.id = index; // 数値のみのIDを付与
 
-      const valueDiv = document.createElement('div'); // 値用のdiv要素を作成
-      valueDiv.textContent = value; // 値テキストを設定
-      valueDiv.style.fontSize = '24px'; // 値のフォントサイズを大きく設定
+        const labelDiv = document.createElement('div'); // ラベル用のdiv要素を作成
+        labelDiv.classList.add('label'); // labelクラスに追加
+        labelDiv.id = `label${index}`; // label+数値のIDを付与
 
-      itemDiv.appendChild(labelDiv); // ラベルdivをアイテムdivに追加
-      itemDiv.appendChild(valueDiv); // 値divをアイテムdivに追加
-      dashboardWrapper.appendChild(itemDiv); // アイテムdivをダッシュボードに追加
-    }
+        const valueDiv = document.createElement('div'); // 値用のdiv要素を作成
+        valueDiv.classList.add('value'); // valueクラスに追加
+        valueDiv.id = `value${index}`; // value+数値のIDを付与
 
-    function initWebSocket() { // WebSocket接続の初期化（または再接続）
-      addLog('Attempting to connect WebSocket...');
-      websocket = new WebSocket(`ws://${location.hostname}/ws`);// ポート80はHTTPのデフォルトなので、:80 は省略可能
-
-      websocket.onopen = () => { // 接続成功時の処理
-        addLog('WebSocket connected');
-      };
-
-      websocket.onclose = () => { // 切断時の処理
-        addLog('WebSocket disconnected. Reconnecting in 2 seconds...');
-        setTimeout(initWebSocket, 2000); // 2秒後に再接続を試みる
-      };
-
-      websocket.onmessage = (event) => { // メッセージ受信時の処理
-        addLog(`Received: ${event.data}`);
-        // jsonデータのパース
-        const data = JSON.parse(event.data);
-        updateDashbordItem(data.index, data.label, data.value);
-      };
-
-      websocket.onerror = (event) => {
-        console.error('WebSocket Error: ', event);
-        // エラー時も onclose が呼ばれることが多いので、再接続は onclose に任せる
-      };
-    }
-
-    // ページが読み込まれたら、最初の接続を開始する
-    //window.addEventListener('load', initWebSocket);
-
-    
-    function testlog() {
-      for (let i = 0; i < 5; i++) {
-        addLog(`Test log message ${i + 1}`);
-
+        itemDiv.appendChild(labelDiv); // ラベルdivをアイテムdivに追加
+        itemDiv.appendChild(valueDiv); // 値divをアイテムdivに追加
+        dashboardWrapper.appendChild(itemDiv); // アイテムdivをダッシュボードに追加
       }
-    }
 
-    setInterval(() => {
-      testlog();
-    }, 1000);
+      const labelDiv = document.getElementById(`label${index}`);
+      const valueDiv = document.getElementById(`value${index}`);
+      labelDiv.textContent = label; // ラベルテキストを設定
+      valueDiv.textContent = value; // 値テキストを設定
+    }
+    
+    // ログ送信フォームのイベントリスナー設定
+    const logForm = document.getElementById('logForm');
+    logForm.addEventListener('submit', function(event) {
+      event.preventDefault(); // フォームのデフォルトの送信動作を防止
+      const logInput = document.getElementById('logInput'); // ログ入力要素を取得
+      const message = logInput.value.trim(); // 入力値を取得してトリム
+      if (message !== '') {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(message); // WebSocketが接続されていればメッセージを送信
+          addLog(`Sent: ${message}`); // 送信ログを追加
+          logInput.value = ''; // 入力フィールドをクリア
+        } else {
+          addLog('WebSocket is not connected. Cannot send message.'); // 接続されていない場合のログを追加
+        }
+      }
+    });
   </script>
 </body>
 </html>

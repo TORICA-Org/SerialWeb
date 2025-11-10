@@ -67,9 +67,24 @@
     border-radius: 5px;
     padding: 5px;
     max-width: 200px;
+    max-width: 200px;
+  }
+  #dashboardWrapper > div.update {
+    animation-duration: 200ms;
+    animation-name: update;
+  }
+  @keyframes update {
+    from {
+      box-shadow: 0px 0px 2px 2px gold;
+    }
+    to {
+      box-shadow: none;
+    }
   }
   #dashboardWrapper div .label {
-    margin-left: 5px;
+    background-color: #EEE;
+    border-radius: 5px;
+    padding: 10px;
     font-weight: bold;
   }
   #dashboardWrapper div .value {
@@ -304,6 +319,11 @@
         dashboardWrapper.appendChild(itemDiv); // アイテムdivをダッシュボードに追加
       }
 
+      const itemDiv = document.getElementById(index);
+      itemDiv.classList.add('update');
+      setTimeout(() => {
+        itemDiv.classList.remove('update');
+      }, 200);
       const labelDiv = document.getElementById(`label${index}`);
       const valueDiv = document.getElementById(`value${index}`);
       labelDiv.textContent = label; // ラベルテキストを設定

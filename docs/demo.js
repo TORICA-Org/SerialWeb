@@ -2,7 +2,9 @@
 // window.WebSocket だけを上書きする。
 (function() {
 
-    // (1) 本物のWebSocketの定数をコピーしておく
+    let mockIndexCounter = 0;
+    let pushIntervalId = null; // 定期的なプッシュを制御するためのID
+
     const ReadyState = {
         CONNECTING: 0,
         OPEN: 1,
@@ -10,20 +12,16 @@
         CLOSED: 3
     };
 
-    // (2) WebSocketの「ふり」をするモッククラスを定義
     class MockWebSocket {
         
-        // --- 本物のAPIと同じプロパティを定義 ---
         url = '';
         readyState = ReadyState.CONNECTING;
         
-        // イベントハンドラ
         onopen = null;
         onmessage = null;
         onclose = null;
         onerror = null;
 
-        // --- 定数 (static) ---
         static CONNECTING = ReadyState.CONNECTING;
         static OPEN = ReadyState.OPEN;
         static CLOSING = ReadyState.CLOSING;
@@ -33,55 +31,70 @@
             this.url = url;
             console.log(`[MockWebSocket] 接続試行中... -> ${url}`);
 
-            // (3) 非同期処理をシミュレート
-            // 0.5秒後に「接続成功」をエミュレート
+            // 接続成功をエミュレート
             setTimeout(() => {
                 this.readyState = ReadyState.OPEN;
-                // onopenイベントハンドラが設定されていれば実行
                 if (this.onopen) {
-                    // 本物と同じようにEventオブジェクトを渡す
                     this.onopen(new Event('open'));
                 }
                 console.log("[MockWebSocket] 接続成功 (OPEN)");
+                
+                // ★★★ 接続成功後にプッシュ処理を開始 ★★★
+                this.startPeriodicPush();
+
             }, 500); 
         }
 
-        // --- 本物のAPIと同じメソッドを定義 ---
+        // --- 定期的なデータプッシュ処理 ---
+        startPeriodicPush() {
+            // 既にインターバルが設定されていたらクリア
+            if (pushIntervalId) {
+                clearInterval(pushIntervalId);
+            }
+            
+            // 200ミリ秒ごとにデータをプッシュするインターバルを設定
+            pushIntervalId = setInterval(() => {
+                if (this.readyState !== ReadyState.OPEN) {
+                    // 接続が閉じたらインターバルを停止
+                    clearInterval(pushIntervalId);
+                    return;
+                }
+                
+                // 0から4を循環させる
+                const currentIndex = mockIndexCounter % 5; 
+                mockIndexCounter++; 
+                
+                const pushMsg = `(PUSH) Data update at ${new Date().toLocaleTimeString('ja-JP')} #${currentIndex}`;
+                
+                const customData = {
+                    index: currentIndex, // 循環するインデックス
+                    label: `data${currentIndex + 1}`,
+                    value: pushMsg
+                };
 
+                const event = new MessageEvent('message', {
+                    data: JSON.stringify(customData) 
+                });
+
+                if (this.onmessage) {
+                    this.onmessage(event);
+                }
+                console.log(`[MockWebSocket] サーバープッシュ (Index ${currentIndex})`);
+
+            }, 200); // 200ミリ秒ごと
+        }
+        
+        // --- send メソッド (純粋にログ出力のみ) ---
         send(data) {
             if (this.readyState !== ReadyState.OPEN) {
                 console.error("[MockWebSocket] エラー: WebSocketが開いていません。");
                 return;
             }
-
-            console.log(`[MockWebSocket] クライアントから受信: ${data}`);
-
-            // (4) サーバーからの応答をエミュレート（エコーサーバー）
-            // 1秒後にオウム返しする
-            setTimeout(() => {
-                // 本物と同じようにMessageEventオブジェクトを作成
-                const echoMsg = `(エコー) ${data}`;
-                const customData = {
-                    index: 0,
-                    label: "dummy",
-                    value: echoMsg
-                };
-
-                // 正しい書き方: カスタムデータを 'data' プロパティに格納
-                const event = new MessageEvent('message', {
-                    data: JSON.stringify(customData) 
-                    // 他のオプション（origin, lastEventId, source, ports）も必要に応じて追加可能
-                });
-
-                // onmessageハンドラが設定されていれば実行
-                if (this.onmessage) {
-                    this.onmessage(event);
-                }
-                console.log(`[MockWebSocket] サーバーから送信: ${echoMsg}`);
-
-            }, 1000);
+            // クライアントからの送信はログに記録するのみ
+            console.log(`[MockWebSocket] クライアントから送信: ${data}`);
         }
 
+        // --- close メソッド ---
         close(code = 1000, reason = "Normal closure") {
             if (this.readyState === ReadyState.CLOSED || this.readyState === ReadyState.CLOSING) {
                 return;
@@ -89,18 +102,23 @@
 
             this.readyState = ReadyState.CLOSING;
             
-            // (5) 切断処理をエミュレート
+            // 定期プッシュを停止
+            if (pushIntervalId) {
+                clearInterval(pushIntervalId);
+                pushIntervalId = null;
+            }
+            
+            // 切断処理をエミュレート
             setTimeout(() => {
                 this.readyState = ReadyState.CLOSED;
                 if (this.onclose) {
                     this.onclose(new CloseEvent('close', { code: code, reason: reason }));
                 }
                 console.log(`[MockWebSocket] 接続切断 (CLOSED)`);
-            }, 200); // すぐに切断
+            }, 200); 
         }
     }
 
-    // (6) ★最重要★
     // グローバルスコープの本物の WebSocket を、作成したモックで上書きする
     window.WebSocket = MockWebSocket;
 
