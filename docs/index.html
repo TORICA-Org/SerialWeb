@@ -143,6 +143,7 @@
   .checkboxWrapper {
     display: inline-block;
     cursor: pointer;
+    user-select: none; /* 選択を禁止する */
   }
   button {
     padding: 6px 12px;
@@ -150,6 +151,7 @@
     cursor: pointer;
     border: slategray 1px solid;
     border-radius: 5px;
+    user-select: none; /* 選択を禁止する */
   }
   button:active {
     background-color: #DDD;
@@ -282,21 +284,41 @@
       }
     });
 
+    // タイムスタンプのチェックボックスのイベントリスナーを設定
+    const logTimestamps = document.getElementById('logTimestamps'); // タイムスタンプの要素を取得
+    logTimestamps.addEventListener('change', () => {
+      const timestamps = document.querySelectorAll('.timestamp'); // timestampクラスを取得
+      timestamps.forEach(element => {
+        if (logTimestamps.checked) {
+          element.style.display = 'inline'; // 表示
+        }
+        else {
+          element.style.display = 'none'; // 非表示
+        }
+      });
+    });
+
     // ログを表示するヘルパー関数
     const MAX_LOG_ENTRIES = 500;
     function addLog(message) {
       if (paused) return; // 一時停止が有効ならreturn
 
       const logWindow = document.getElementById('logWindow'); // ログウィンドウ要素を取得
-      const logTimestampsChecked = document.getElementById('logTimestamps').checked; // タイムスタンプ表示のチェック状態を取得
 
       const now = new Date();
-      const timestamp = logTimestampsChecked 
-        ? `[${now.toLocaleTimeString()}:${now.getMilliseconds().toString().padStart(3, '0')}] ` 
-        : '';
+      const timestamp = document.createElement('span');
+      timestamp.textContent = `[${now.toLocaleTimeString()}:${now.getMilliseconds().toString().padStart(3, '0')}] `;
+      timestamp.classList.add('timestamp');
+      if (!logTimestamps.checked) {
+        timestamp.style.display = 'none';
+      }
+
+      const messageSpan = document.createElement('span');
+      messageSpan.textContent = message; // ログメッセージを設定
       
       const logEntry = document.createElement('div'); // 新しいdiv要素を作成
-      logEntry.textContent = timestamp + message; // ログメッセージを設定
+      logEntry.appendChild(timestamp); // ログメッセージにタイムスタンプを追加
+      logEntry.appendChild(messageSpan);
       logWindow.appendChild(logEntry); // ログウィンドウにログエントリを追加
 
       if (autoScroll.checked) {
