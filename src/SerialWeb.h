@@ -22,13 +22,13 @@
 
 #include "assets/incbin.h"
 
-namespace WMNamespace {
+namespace SWNamespace {
   
-  class WMClass {
+  class SWClass {
     public:
       void begin(const char *ssid, const char *password);
       void send(const char *label, const char *value);
-      void cleanupClients(uint16_t maxClients = DEFAULT_MAX_WS_CLIENTS);
+      void setMaxClients(uint16_t maxClients);
 
     private:
       static void handleRoot(AsyncWebServerRequest *request);
@@ -43,10 +43,11 @@ namespace WMNamespace {
       const IPAddress NET_MSK = IPAddress(255, 255, 255, 0);
 
       char *labels[99] = {nullptr};
+      uint16_t maxClients = DEFAULT_MAX_WS_CLIENTS;
   };
 
-  extern WMClass WebMonitor;
+  extern SWClass SerialWeb;
 
-} // namespace WMNamespace
+} // namespace SWNamespace
 
-using namespace WMNamespace;
+using namespace SWNamespace;

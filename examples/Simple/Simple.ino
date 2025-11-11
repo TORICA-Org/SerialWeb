@@ -2,13 +2,12 @@
 
 void setup() {
   Serial.begin(115200);
-  WebMonitor.begin("SerialWeb", "12345678");
+  SerialWeb.begin("SerialWeb", "12345678");
 }
 
 void loop() {
   char now[32];
   sprintf(now, "%ld", millis());
-  WebMonitor.send("NOW_TIME", now);
-  WebMonitor.cleanupClients(2);
+  SerialWeb.send("NOW_TIME", now);
   delay(1000);
 }
