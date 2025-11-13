@@ -105,29 +105,32 @@
     padding: 10px 5px;
   }
   #logWindow {
+    display: flex;
+    flex-direction: column;
     font-family: monospace;
     margin: 0;
-    padding: 10px;
-    border: 1px solid black;
+    border: 1px solid gray;
     height: 200px;
-    overflow-y: scroll;
+    overflow: scroll;
+    white-space: pre;
     background-color: #f9f9f9;
     border: slategray 1px solid;
     height: 400px;
+    padding: 3px;
   }
-  #logWindow div {
-    padding: 3px 5px;
+  #logWindow > div {
+      display: inline-block;
+      padding: 5px;
+      border-bottom: 1px dotted gray;
   }
-  #logWindow div:nth-child(odd) {
-    background-color: #e9e9e9;
-  }
+
   #statusWrapper {
     background-color: #EEE;
     border: gray solid 1px;
     border-radius: 0 0 5px 5px;
     margin: -1px 0 7px 0;
     padding: 5px;
-}
+  }
   #logForm {
     margin-top: 7px;
     display: flex;
@@ -140,7 +143,7 @@
     border-radius: 5px;
     flex: 1;
   }
-  .checkboxWrapper {
+  .buttonWrapper {
     display: inline-block;
     cursor: pointer;
     user-select: none; /* 選択を禁止する */
@@ -175,10 +178,12 @@
   <div id='logWrapper' class='content'>
     <div id='logWindow'></div>
     <div id='statusWrapper'>Status: <span id='status'></span></div>
-    <button id='connectButton'>Connect/Disconnect</button>
-    <button id='pauseButton'>Pause</button>
-    <button id='clearButton'>Clear</button>
-    <div class = 'checkboxWrapper'>
+    <div class = 'buttonWrapper'>
+      <button id='connectButton'>Connect</button>
+      <button id='pauseButton'>Pause</button>
+      <button id='clearButton'>Clear</button>
+    </div>
+    <div class = 'buttonWrapper'>
       <input type='checkbox' id='autoScroll' checked></input><label for='autoScroll'> Auto Scroll</label>
       <input type='checkbox' id='logTimestamps' checked></input><label for='logTimestamps'> Show Timestamps</label><br>
     </div>
@@ -319,7 +324,7 @@
       
       const messageSpan = document.createElement('span');
       messageSpan.textContent = message; // ログメッセージを設定
-      
+
       const logEntry = document.createElement('div'); // 新しいdiv要素を作成
       logEntry.appendChild(timestamp); // ログメッセージにタイムスタンプを追加
       logEntry.appendChild(messageSpan);

@@ -1,16 +1,17 @@
 #include "SerialWeb.h"
 
-namespace SWNamespace { // Namespaceの開始
+namespace SWNamespace {
 
 #ifdef TORICA
-  INCBIN(html, "assets/TORICA_index.html"); // HTMLファイルをバイナリとして埋め込む
+  INCBIN(html, "../docs/TORICA_index.html"); // HTMLファイルをバイナリとして埋め込む
 #else
-  INCBIN(html, "assets/index.html"); // HTMLファイルをバイナリとして埋め込む
+  INCBIN(html, "../docs/index.html"); // HTMLファイルをバイナリとして埋め込む
 #endif
 
   AsyncWebServer SWClass::server(80); // HTTPサーバーインスタンスの定義
   AsyncWebSocket SWClass::ws("/ws"); // WebSocketエンドポイントの設定
   DNSServer SWClass::dns; // DNSサーバーインスタンスの定義
+  uint16_t SWClass::maxClients = DEFAULT_MAX_WS_CLIENTS;
 
   void SWClass::handleRoot (AsyncWebServerRequest *request) {
     request->send(200, "text/html", html); // HTMLコンテンツを返す
@@ -46,12 +47,9 @@ namespace SWNamespace { // Namespaceの開始
     }
   }
 
-  void SWClass::setMaxClients (uint16_t _maxClients) {
-    maxClients = _maxClients;
-  }
-
-  void SWClass::begin(const char *ssid, const char *password) {
-    Serial.println("Starting TORICA WebServer...");
+  void SWClass::begin (const char *ssid, const char *password, 
+    const IPAddress AP_IP, const IPAddress NET_MSK, const byte DNS_PORT) {
+    
     WiFi.disconnect(true); // これがないとwebServerを再起動できない
     delay(1000); // この遅延は必須（これがないとwebServerが起動しない）
     WiFi.softAPConfig(AP_IP, AP_IP, NET_MSK); // IPアドレスの設定
@@ -59,19 +57,20 @@ namespace SWNamespace { // Namespaceの開始
     delay(500);  // IPアドレス取得のための遅延
     Serial.print("AP IP address: ");
     Serial.println(WiFi.softAPIP());
+    
+    begin(AP_IP, DNS_PORT);
+  }
 
+  void SWClass::begin (const IPAddress AP_IP, const byte DNS_PORT) {
     ws.onEvent(handleWsEvent); // WebSocketイベントハンドラの登録
     Serial.println("WebSocket server started.");
 
     // WebSocketの同時接続数を制限するミドルウェアの追加
     server.addHandler(&ws).addMiddleware([](AsyncWebServerRequest *request, ArMiddlewareNext next) {
-      // ws.count()は現在のWSクライアントの数
-      if (ws.count() > 5) {
-        // 2つ以上のクライアントがいる場合、次のクライアントの接続を防止
+      if (ws.count() > maxClients) { // ws.count()は現在のWSクライアントの数
         request->send(503, "text/plain", "Server is busy");
       } else {
-        // 次のミドルウェアと最後にハンドラを処理
-        next();
+        next(); // 次のミドルウェアと最後にハンドラを処理
       }
     });
   

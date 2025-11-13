@@ -1,8 +1,10 @@
 #include <SerialWeb.h>
 
+char *SSID = "SerialWeb";
+char *PASSWORD = "12345678";
+
 void setup() {
-  Serial.begin(115200);
-  SerialWeb.begin("SerialWeb", "12345678");
+  SerialWeb.begin(SSID, PASSWORD);
 }
 
 void loop() {

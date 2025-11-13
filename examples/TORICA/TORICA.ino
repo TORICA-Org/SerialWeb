@@ -1,14 +1,15 @@
 #include <TORICA_SerialWeb.h>
 
+char *SSID = "TORICA";
+char *PASSWORD = "12345678";
+
 void setup() {
-  Serial.begin(115200);
-  WebMonitor.begin("TORICA", "12345678");
+  SerialWeb.begin(SSID, PASSWORD);
 }
 
 void loop() {
   char now[32];
   sprintf(now, "%ld", millis());
-  WebMonitor.send("NOW_TIME", now);
-  WebMonitor.cleanupClients(2);
+  SerialWeb.send("NOW_TIME", now);
   delay(1000);
 }
