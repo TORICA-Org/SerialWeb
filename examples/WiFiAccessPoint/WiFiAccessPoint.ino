@@ -1,6 +1,6 @@
-#include <TORICA_SerialWeb.h>
+#include <SerialWeb.h>
 
-constexpr char SSID[] = "TORICA";
+constexpr char SSID[] = "SerialWeb";
 constexpr char PASSWORD[] = "12345678";
 
 void setup() {

@@ -108,7 +108,7 @@ namespace SWNamespace {
       Serial.println("Error: No available slot for new label.");
       return; // ラベル登録に失敗した場合は終了
     }
-    String message = String("{\"index\":\"") + String(dataIndex) + String("\",\"label\":\"") + String(label) + String("\",\"content\":\"") + String(value) + String("\"}"); // JSON形式のメッセージ作成
+    String message = String("{\"index\":\"") + String(dataIndex) + String("\",\"label\":\"") + String(label) + String("\",\"value\":\"") + String(value) + String("\"}"); // JSON形式のメッセージ作成
     ws.textAll(message); // すべてのクライアントにメッセージ送信
     ws.cleanupClients(maxClients); // クライアントのクリーンアップ
   }

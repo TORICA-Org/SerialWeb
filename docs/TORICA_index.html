@@ -111,7 +111,7 @@
     margin: 0;
     border: 1px solid gray;
     height: 200px;
-    overflow: scroll;
+    overflow-y: scroll;
     white-space: pre;
     background-color: #f9f9f9;
     border: slategray 1px solid;
@@ -119,11 +119,12 @@
     padding: 3px;
   }
   #logWindow > div {
-      display: inline-block;
-      padding: 5px;
+    padding: 3px;
+    > span {
+      padding: 2px;
       border-bottom: 1px dotted gray;
+    }
   }
-
   #statusWrapper {
     background-color: #EEE;
     border: gray solid 1px;
@@ -324,10 +325,13 @@
       
       const messageSpan = document.createElement('span');
       messageSpan.textContent = message; // ログメッセージを設定
+      
+      const lineSpan = document.createElement('span');
+      lineSpan.appendChild(timestamp); // タイムスタンプを追加
+      lineSpan.appendChild(messageSpan); // ログメッセージを追加 
 
       const logEntry = document.createElement('div'); // 新しいdiv要素を作成
-      logEntry.appendChild(timestamp); // ログメッセージにタイムスタンプを追加
-      logEntry.appendChild(messageSpan);
+      logEntry.appendChild(lineSpan); // 1行追加
       logWindow.appendChild(logEntry); // ログウィンドウにログエントリを追加
 
       if (autoScroll.checked) {

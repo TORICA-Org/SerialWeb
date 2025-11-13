@@ -1,9 +1,11 @@
 #include <SerialWeb.h>
 
-char *SSID = "Xiaomi 11T Pro";
-char *PASSWORD = "87654321";
+constexpr char SSID[] = "Xiaomi 11T Pro";
+constexpr char PASSWORD[] = "87654321";
 
 void setup() {
+  Serial.begin(115200);
+
   WiFi.mode(WIFI_STA);
   WiFi.begin(SSID, PASSWORD);
 
@@ -23,8 +25,9 @@ void setup() {
 }
 
 void loop() {
-  char now[32];
-  sprintf(now, "%ld", millis());
-  SerialWeb.send("NOW_TIME", now);
+  char label[] = "NOW_TIME";
+  char value[32];
+  sprintf(value, "%ld", millis());
+  SerialWeb.send(label, value);
   delay(1000);
 }
