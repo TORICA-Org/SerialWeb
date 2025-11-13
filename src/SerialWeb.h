@@ -5,8 +5,9 @@
 
 #pragma once
 
-#include <DNSServer.h>
 #include <Arduino.h>
+#include <ESPAsyncWebServer.h>
+#include <DNSServer.h>
 #if defined(ESP32) || defined(LIBRETINY)
 #include <AsyncTCP.h>
 #include <WiFi.h>
@@ -18,17 +19,28 @@
 #include <WiFi.h>
 #endif
 
-#include <ESPAsyncWebServer.h>
+#include "incbin.h"
 
-#include "assets/incbin.h"
-
-namespace WMNamespace {
+namespace SWNamespace {
   
-  class WMClass {
+  class SWClass {
     public:
-      void begin(const char *ssid, const char *password);
+      void begin(
+        const char *ssid,
+        const char *password,
+        const IPAddress AP_IP = IPAddress(198, 168, 4, 1),
+        const IPAddress NET_MSK = IPAddress(255, 255, 255, 0),
+        const byte DNS_PORT = 53
+      );
+      void begin(const IPAddress STA_IP, const byte DNS_PORT = 53);
+      // void print(char *string);
+      // void println(char *string);
       void send(const char *label, const char *value);
-      void cleanupClients(uint16_t maxClients = DEFAULT_MAX_WS_CLIENTS);
+
+      // Setter
+      void setMaxClients(uint16_t _maxClients) {
+        maxClients = _maxClients;
+      }
 
     private:
       static void handleRoot(AsyncWebServerRequest *request);
@@ -38,15 +50,12 @@ namespace WMNamespace {
       static AsyncWebServer server;
       static AsyncWebSocket ws;
 
-      const byte DNS_PORT = 53;
-      const IPAddress AP_IP = IPAddress(198, 168, 4, 1);
-      const IPAddress NET_MSK = IPAddress(255, 255, 255, 0);
-
       char *labels[99] = {nullptr};
+      static uint16_t maxClients;
   };
 
-  extern WMClass WebMonitor;
+  extern SWClass SerialWeb;
 
-} // namespace WMNamespace
+} // namespace SWNamespace
 
-using namespace WMNamespace;
+using namespace SWNamespace;

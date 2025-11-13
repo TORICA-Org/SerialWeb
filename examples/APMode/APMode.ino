@@ -1,6 +1,6 @@
-#include <TORICA_SerialWeb.h>
+#include <SerialWeb.h>
 
-char *SSID = "TORICA";
+char *SSID = "SerialWeb";
 char *PASSWORD = "12345678";
 
 void setup() {

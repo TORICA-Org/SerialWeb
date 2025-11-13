@@ -1,4 +1,7 @@
-// incbin.h またはソースコードの先頭
+#pragma once
+
+namespace SWNamespace {
+
 #define INCBIN(NAME, FILE) \
     __asm__(".section .rodata\n" \
             ".global incbin_" #NAME "_start\n" \
@@ -16,3 +19,5 @@
     extern const char NAME[] asm("incbin_" #NAME "_start"); \
     extern const char NAME##_end[] asm("incbin_" #NAME "_end"); \
     extern const unsigned int NAME##_size asm("incbin_" #NAME "_size");
+
+} // SWNamespace

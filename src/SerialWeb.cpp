@@ -1,22 +1,23 @@
 #include "SerialWeb.h"
 
-namespace WMNamespace { // Namespaceの開始
+namespace SWNamespace {
 
 #ifdef TORICA
-  INCBIN(html, "assets/TORICA_index.html"); // HTMLファイルをバイナリとして埋め込む
+  INCBIN(html, "../docs/TORICA_index.html"); // HTMLファイルをバイナリとして埋め込む
 #else
-  INCBIN(html, "assets/index.html"); // HTMLファイルをバイナリとして埋め込む
+  INCBIN(html, "../docs/index.html"); // HTMLファイルをバイナリとして埋め込む
 #endif
 
-  AsyncWebServer WMClass::server(80); // HTTPサーバーインスタンスの定義
-  AsyncWebSocket WMClass::ws("/ws"); // WebSocketエンドポイントの設定
-  DNSServer WMClass::dns; // DNSサーバーインスタンスの定義
+  AsyncWebServer SWClass::server(80); // HTTPサーバーインスタンスの定義
+  AsyncWebSocket SWClass::ws("/ws"); // WebSocketエンドポイントの設定
+  DNSServer SWClass::dns; // DNSサーバーインスタンスの定義
+  uint16_t SWClass::maxClients = DEFAULT_MAX_WS_CLIENTS;
 
-  void WMClass::handleRoot (AsyncWebServerRequest *request) {
+  void SWClass::handleRoot (AsyncWebServerRequest *request) {
     request->send(200, "text/html", html); // HTMLコンテンツを返す
   }
 
-  void WMClass::handleWsEvent (AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) { // WebSocketイベントハンドラ
+  void SWClass::handleWsEvent (AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) { // WebSocketイベントハンドラ
     if (type == WS_EVT_CONNECT) { // クライアント接続時
       ws.textAll("new client connected"); // 全クライアントにメッセージ送信
       Serial.println("ws connect");
@@ -46,8 +47,9 @@ namespace WMNamespace { // Namespaceの開始
     }
   }
 
-  void WMClass::begin(const char *ssid, const char *password) {
-    Serial.println("Starting TORICA WebServer...");
+  void SWClass::begin (const char *ssid, const char *password, 
+    const IPAddress AP_IP, const IPAddress NET_MSK, const byte DNS_PORT) {
+    
     WiFi.disconnect(true); // これがないとwebServerを再起動できない
     delay(1000); // この遅延は必須（これがないとwebServerが起動しない）
     WiFi.softAPConfig(AP_IP, AP_IP, NET_MSK); // IPアドレスの設定
@@ -55,19 +57,20 @@ namespace WMNamespace { // Namespaceの開始
     delay(500);  // IPアドレス取得のための遅延
     Serial.print("AP IP address: ");
     Serial.println(WiFi.softAPIP());
+    
+    begin(AP_IP, DNS_PORT);
+  }
 
+  void SWClass::begin (const IPAddress AP_IP, const byte DNS_PORT) {
     ws.onEvent(handleWsEvent); // WebSocketイベントハンドラの登録
     Serial.println("WebSocket server started.");
 
     // WebSocketの同時接続数を制限するミドルウェアの追加
     server.addHandler(&ws).addMiddleware([](AsyncWebServerRequest *request, ArMiddlewareNext next) {
-      // ws.count()は現在のWSクライアントの数
-      if (ws.count() > 5) {
-        // 2つ以上のクライアントがいる場合、次のクライアントの接続を防止
+      if (ws.count() > maxClients) { // ws.count()は現在のWSクライアントの数
         request->send(503, "text/plain", "Server is busy");
       } else {
-        // 次のミドルウェアと最後にハンドラを処理
-        next();
+        next(); // 次のミドルウェアと最後にハンドラを処理
       }
     });
   
@@ -86,7 +89,7 @@ namespace WMNamespace { // Namespaceの開始
     Serial.println("HTTP server started.");
   }
 
-  void WMClass::send (const char *label, const char *value) {
+  void SWClass::send (const char *label, const char *value) {
     int dataIndex = -1;
     for (int i = 0; i < sizeof(labels)/sizeof(labels[0]); i++) {
       if (labels[i] == nullptr) { // 未登録のラベルを見つけた場合
@@ -107,12 +110,9 @@ namespace WMNamespace { // Namespaceの開始
     }
     String message = String("{\"index\":\"") + String(dataIndex) + String("\",\"label\":\"") + String(label) + String("\",\"content\":\"") + String(value) + String("\"}"); // JSON形式のメッセージ作成
     ws.textAll(message); // すべてのクライアントにメッセージ送信
-  }
-
-  void WMClass::cleanupClients (uint16_t maxClients) {
     ws.cleanupClients(maxClients); // クライアントのクリーンアップ
   }
 
-  WMClass WebMonitor; // グローバルインスタンスの作成
+  SWClass SerialWeb; // グローバルインスタンスの作成
 
-} // namespace WMNamespace
+} // namespace SWNamespace
