@@ -10,6 +10,7 @@
   :root {
     font-family: sans-serif;
     padding: 20px;
+    scroll-behavior: smooth;
   }
   h1 {
     font-size: xx-large;
@@ -51,7 +52,7 @@
     box-sizing: border-box;
     max-width: 800px;
     margin: -3px auto 20px auto;
-    padding: 20px;
+    padding: 15px;
     border: 3px solid silver;
     border-radius: 0 10px 10px 10px;
     z-index: 50;
@@ -109,13 +110,11 @@
     flex-direction: column;
     font-family: monospace;
     margin: 0;
-    border: 1px solid gray;
-    height: 200px;
-    overflow-y: scroll;
-    white-space: pre;
-    background-color: #f9f9f9;
     border: slategray 1px solid;
-    height: 400px;
+    min-height: 300px;
+    overflow-x: auto;
+    white-space: nowrap;
+    background-color: #f9f9f9;
     padding: 3px;
   }
   #logWindow > div {
@@ -128,14 +127,18 @@
   #statusWrapper {
     background-color: #EEE;
     border: gray solid 1px;
-    border-radius: 0 0 5px 5px;
-    margin: -1px 0 7px 0;
+    border-radius: 5px 5px 0 0;
+    margin: 0 0 -1px 0;
     padding: 5px;
-}
+  }
   #logForm {
-    margin-top: 7px;
+    margin-bottom: 7px;
     display: flex;
     gap: 5px;
+    > .button {
+      margin: 0;
+      height: auto;
+    }
   }
   #logInput {
     padding: 6px;
@@ -144,24 +147,35 @@
     border-radius: 5px;
     flex: 1;
   }
-  .buttonWrapper {
-    display: inline-block;
-    cursor: pointer;
-    user-select: none; /* 選択を禁止する */
+  #footer {
+    background-color: #EEE;
+    margin-top: -1px;
+    height: 1rem;
+    border: slategray 1px solid;
+    border-radius: 0 0 5px 5px;
   }
-  button {
-    padding: 6px 12px;
+  .button {
+    display: inline-flex;
+    margin-bottom: 7px;
+    padding: 4px 8px;
     font-weight: bold;
+    font-size: small;
     cursor: pointer;
+    color: buttontext;
+    text-indent: 0px;
     border: slategray 1px solid;
     border-radius: 5px;
+    box-sizing: border-box;
+    box-shadow: 1px 1px 2px 0 black;
+    background-color: buttonface;
     user-select: none; /* 選択を禁止する */
+    align-items: center;
   }
-  button:active {
+  .button:active {
     background-color: #DDD;
   }
-  button.active {
-    box-shadow: inset 0 2px 5px black;
+  .button.active {
+    box-shadow: inset 2px 2px 2px 0 black;
   }
 </style>
 
@@ -173,21 +187,17 @@
   </div>
   <div id='dashboardWrapper' class='content'></div>
   <div id='logWrapper' class='content'>
-    <div id='logWindow'></div>
-    <div id='statusWrapper'>Status: <span id='status'></span></div>
-    <div class = 'buttonWrapper'>
-      <button id='connectButton'>Connect</button>
-    <button id='pauseButton'>Pause</button>
-    <button id='clearButton'>Clear</button>
-    </div>
-    <div class = 'buttonWrapper'>
-      <input type='checkbox' id='autoScroll' checked></input><label for='autoScroll'> Auto Scroll</label>
-      <input type='checkbox' id='logTimestamps' checked></input><label for='logTimestamps'> Show Timestamps</label><br>
-    </div>
     <form id='logForm'>
       <input type='text' id='logInput' placeholder='Type a message...' />
-      <button id='logSendButton'>Send</button>
+      <button class='button' id='logSendButton'>Send</button>
     </form>
+      <div class='button' id='connectButton'>Connect</div>
+      <div class='button' id='pauseButton'>Pause</div>
+      <div class='button' id='clearButton'>Clear</div>
+      <div class='button active' id='logTimestamps'>Show Timestamps</div>
+    <div id='statusWrapper'>Status: <span id='status'></span></div>
+    <div id='logWindow'></div>
+    <div id='footer'></div>
   </div>
 
   <script src='demo.js' type='text/javascript'></script>
@@ -281,21 +291,15 @@
       logWindow.innerHTML = ''; // ログウィンドウの内容をクリア
     });
 
-    // オートスクロールのチェックボックスのイベントリスナーを設定
-    const autoScroll = document.getElementById('autoScroll');
-    autoScroll.addEventListener('change', () => { // オートスクロールのチェックボックスが変更されたときの処理
-      const logWindow = document.getElementById('logWindow'); // ログウィンドウ要素を取得
-      if (autoScroll.checked) {
-        logWindow.scrollTop = logWindow.scrollHeight; // オートスクロールが有効なら、スクロール位置を最下部に設定
-      }
-    });
-
     // タイムスタンプのチェックボックスのイベントリスナーを設定
-    const logTimestamps = document.getElementById('logTimestamps'); // タイムスタンプの要素を取得
-    logTimestamps.addEventListener('change', () => {
+    let showTimestamps = true; // タイムスタンプの表示状態を示すフラグ
+    const timestampsButton = document.getElementById('logTimestamps'); // タイムスタンプボタンの要素を取得
+    timestampsButton.addEventListener('click', () => {
+      timestampsButton.classList.toggle('active');
       const timestamps = document.querySelectorAll('.timestamp'); // timestampクラスを取得
+      showTimestamps = !showTimestamps;
       timestamps.forEach(element => {
-        if (logTimestamps.checked) {
+        if (showTimestamps) {
           element.style.display = 'inline'; // 表示
         }
         else {
@@ -315,7 +319,7 @@
       const timestamp = document.createElement('span');
       timestamp.textContent = `[${now.toLocaleTimeString()}:${now.getMilliseconds().toString().padStart(3, '0')}] `;
       timestamp.classList.add('timestamp');
-      if (!logTimestamps.checked) {
+      if (!showTimestamps) {
         timestamp.style.display = 'none';
       }
 
@@ -328,13 +332,10 @@
 
       const logEntry = document.createElement('div'); // 新しいdiv要素を作成
       logEntry.appendChild(lineSpan); // 1行追加
-      logWindow.appendChild(logEntry); // ログウィンドウにログエントリを追加
+      logWindow.insertBefore(logEntry, logWindow.firstChild); // ログウィンドウの先頭にログエントリを追加
 
-      if (autoScroll.checked) {
-        logWindow.scrollTop = logWindow.scrollHeight; // オートスクロールが有効なら、スクロール位置を最下部に設定
-      }
       while (logWindow.children.length > MAX_LOG_ENTRIES) { // ログの数がMAX_LOG_ENTRIES未満になるまで繰り返し
-        logWindow.removeChild(logWindow.firstChild); // 最初の（一番古い）ログを消去
+        logWindow.removeChild(logWindow.lastChild); // 最後の（一番古い）ログを消去
       }
     }
 
