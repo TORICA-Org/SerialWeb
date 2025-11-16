@@ -13,5 +13,11 @@ void loop() {
   char value[32];
   sprintf(value, "%ld", millis());
   SerialWeb.send(label, value);
+
+  // Serial.printf("now buffer has %d data.\n", SerialWeb.available());
+  if (SerialWeb.available() > 0) {
+    String msg = SerialWeb.readString();
+    Serial.printf("readString: %s\n", msg);
+  }
   delay(100);
 }
