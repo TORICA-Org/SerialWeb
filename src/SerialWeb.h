@@ -26,32 +26,26 @@ namespace SWNamespace {
   
   class SWClass : public Print {
     public:
-      SWClass () {
-        instance = this;
-        tx_buffer[0] = '\0';
-        rx_buffer1[0] = '\0';
-        rx_buffer2[0] = '\0';
-        writing = rx_buffer1;
-        reading = rx_buffer2;
-      }
-      ~SWClass(){}
+      SWClass();
+      ~SWClass();
 
       void begin (
         const char *ssid,
         const char *password,
-        const IPAddress AP_IP = IPAddress(198, 168, 4, 1),
+        const IPAddress AP_IP = IPAddress(192, 168, 4, 1),
         const IPAddress NET_MSK = IPAddress(255, 255, 255, 0),
         const byte DNS_PORT = 53
       );
       void begin(const IPAddress STA_IP, const byte DNS_PORT = 53);
       void send(const char *label, const char *value);
-      int available();
+      bool available();
       String readString();
 
-      // Setter
-      void setMaxClients (uint16_t _maxClients) {
-        maxClients = _maxClients;
-      }
+      // Config Setter
+      void setMaxClients (uint16_t _maxClients);
+
+      // Status Getter
+      
 
     private:
       static SWClass *instance;
@@ -62,21 +56,24 @@ namespace SWNamespace {
       void handleRoot(AsyncWebServerRequest *request);
       void handleWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
         AwsEventType type, void *arg, uint8_t *data, size_t len);
-
+      void receiveHttp(AsyncWebServerRequest *request);
+      void handleString(const char *str, size_t len);
 
       char *labels[99] = {nullptr};
 
       uint16_t maxClients = DEFAULT_MAX_WS_CLIENTS;
       static constexpr int BUFFER_SIZE = 256;
-      char tx_buffer[BUFFER_SIZE];
       char rx_buffer1[BUFFER_SIZE];
       char rx_buffer2[BUFFER_SIZE];
       volatile char *writing;
       volatile char *reading;
-
+      volatile bool isReading;
+      volatile bool newData;
+      
       // Override `write()` in `Print.h`
-      virtual void flush(){}
-      virtual size_t write(uint8_t c);
+      size_t write(uint8_t c) override;
+      size_t write(const uint8_t *buffer, size_t size) override;
+      void flush() override;
   };
 
   extern SWClass SerialWeb;
