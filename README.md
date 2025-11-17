@@ -8,17 +8,28 @@
 ## 必要なライブラリ
 以下のライブラリをライブラリマネージャからインストールしてください．
 > [!NOTE]
-> 名前の似たライブラリがたくさん存在します．十分注意してください．
+> 名前の似たライブラリがたくさん存在します．作者の名前なども使って照合してください．
 
+### 非同期通信機能(WebSocketなど)を提供するライブラリ
+- name: `ESP Async WebServer`
+- author: `ESP32Async`
+
+> [!NOTE]
+> このライブラリはほとんどのマイコンで共通です．
+
+### TCP通信管理機能を提供するライブラリ
 - ESP32シリーズのマイコンの場合
-  - ESPAsyncWebServer.h
-  - AsyncTCP.h
+  - name: `Async TCP`
+  - author: `ESP32Async`
 - ESP8266の場合
-  - ESPAsyncWebServer.h
-  - ESPAsyncTCP.h
+  - name: `ESP Async TCP`
+  - author: `ESP32Async`
 - Raspberry Pi Pico WなどのRP系マイコンの場合
-  - ESPAsyncWebServer.h
-  - RPAsyncTCP.h
+  - name: `RPAsyncTCP`
+  - author: `Hristo Gochkov,Khoi Hoang,Ayush Sharma`
+  
+> [!NOTE]
+> これらのライブラリはマイコンごとに異なります．
 
 ## インスタンス
 インスタンス化は不要です．グローバルインスタンスを提供しています．
