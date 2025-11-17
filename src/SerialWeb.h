@@ -6,6 +6,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <Print.h>
 #include <ESPAsyncWebServer.h>
 #include <DNSServer.h>
 #if defined(ESP32) || defined(LIBRETINY)
@@ -23,35 +24,56 @@
 
 namespace SWNamespace {
   
-  class SWClass {
+  class SWClass : public Print {
     public:
-      void begin(
+      SWClass();
+      ~SWClass();
+
+      void begin (
         const char *ssid,
         const char *password,
-        const IPAddress AP_IP = IPAddress(198, 168, 4, 1),
+        const IPAddress AP_IP = IPAddress(192, 168, 4, 1),
         const IPAddress NET_MSK = IPAddress(255, 255, 255, 0),
         const byte DNS_PORT = 53
       );
       void begin(const IPAddress STA_IP, const byte DNS_PORT = 53);
-      // void print(char *string);
-      // void println(char *string);
       void send(const char *label, const char *value);
+      bool available();
+      String readString();
 
-      // Setter
-      void setMaxClients(uint16_t _maxClients) {
-        maxClients = _maxClients;
-      }
+      // Config Setter
+      void setMaxClients (uint16_t _maxClients);
+
+      // Status Getter
+      
 
     private:
-      static void handleRoot(AsyncWebServerRequest *request);
-      static void handleWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
-
+      static SWClass *instance;
       static DNSServer dns;
       static AsyncWebServer server;
       static AsyncWebSocket ws;
+      
+      void handleRoot(AsyncWebServerRequest *request);
+      void handleWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
+        AwsEventType type, void *arg, uint8_t *data, size_t len);
+      void receiveHttp(AsyncWebServerRequest *request);
+      void handleString(const char *str, size_t len);
 
       char *labels[99] = {nullptr};
-      static uint16_t maxClients;
+
+      uint16_t maxClients = DEFAULT_MAX_WS_CLIENTS;
+      static constexpr int BUFFER_SIZE = 256;
+      char rx_buffer1[BUFFER_SIZE];
+      char rx_buffer2[BUFFER_SIZE];
+      volatile char *writing;
+      volatile char *reading;
+      volatile bool isReading;
+      volatile bool newData;
+      
+      // Override `write()` in `Print.h`
+      size_t write(uint8_t c) override;
+      size_t write(const uint8_t *buffer, size_t size) override;
+      void flush() override;
   };
 
   extern SWClass SerialWeb;

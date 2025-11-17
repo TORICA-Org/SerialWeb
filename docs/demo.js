@@ -81,7 +81,7 @@
                 }
                 console.log(`[MockWebSocket] サーバープッシュ (Index ${currentIndex})`);
 
-            }, 200); // 200ミリ秒ごと
+            }, 10); // 10ミリ秒ごと
         }
         
         // --- send メソッド (純粋にログ出力のみ) ---
