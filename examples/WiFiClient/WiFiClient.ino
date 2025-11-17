@@ -1,7 +1,7 @@
 #include <SerialWeb.h>
 
-constexpr char SSID[] = "Xiaomi 11T Pro";
-constexpr char PASSWORD[] = "87654321";
+constexpr char SSID[] = "your-ssid";
+constexpr char PASSWORD[] = "your-password";
 
 void setup() {
   Serial.begin(115200);
