@@ -3,9 +3,9 @@
 namespace SWNamespace {
 
 #ifdef TORICA
-  INCBIN(html, "../docs/TORICA_index.html"); // HTMLファイルをバイナリとして埋め込む
+  #include "assets/TORICA_index.h"
 #else
-  INCBIN(html, "../docs/index.html"); // HTMLファイルをバイナリとして埋め込む
+  #include "assets/index.h"
 #endif
 
   SWClass *SWClass::instance = nullptr;

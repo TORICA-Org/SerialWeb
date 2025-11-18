@@ -20,8 +20,6 @@
 #include <WiFi.h>
 #endif
 
-#include "incbin.h"
-
 namespace SWNamespace {
   
   class SWClass : public Print {
