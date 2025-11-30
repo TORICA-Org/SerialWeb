@@ -1,7 +1,12 @@
-//=============================================================
-// TORICA WebServer Library
-// Created by 00kenno
-//=============================================================
+/**
+ * @file SerialWeb.h
+ * @brief SerialWeb Library for ESP32/RP2040
+ * * Provides a web-based serial monitor interface via WebSocket.
+ * * @author 00kenno
+ * @date 2025
+ * @license MIT
+ * @copyright Copyright (c) 2025 00kenno
+ */
 
 #pragma once
 
