@@ -14,16 +14,6 @@
 #include <Print.h>
 #include <ESPAsyncWebServer.h>
 #include <DNSServer.h>
-#if defined(ESP32) || defined(LIBRETINY)
-#include <AsyncTCP.h>
-#include <WiFi.h>
-#elif defined(ESP8266)
-#include <ESP8266WiFi.h>
-#include <ESPAsyncTCP.h>
-#elif defined(TARGET_RP2040) || defined(TARGET_RP2350) || defined(PICO_RP2040) || defined(PICO_RP2350)
-#include <RPAsyncTCP.h>
-#include <WiFi.h>
-#endif
 
 namespace SWNamespace {
   
@@ -39,7 +29,7 @@ namespace SWNamespace {
         const IPAddress NET_MSK = IPAddress(255, 255, 255, 0),
         const byte DNS_PORT = 53
       );
-      void begin(const IPAddress STA_IP, const byte DNS_PORT = 53);
+      void begin(const IPAddress IP, const byte DNS_PORT = 53);
       void send(const char *label, const char *value);
       bool available();
       String readString();
@@ -51,7 +41,6 @@ namespace SWNamespace {
       
 
     private:
-      static SWClass *instance;
       static DNSServer dns;
       static AsyncWebServer server;
       static AsyncWebSocket ws;
@@ -62,7 +51,8 @@ namespace SWNamespace {
       void receiveHttp(AsyncWebServerRequest *request);
       void handleString(const char *str, size_t len);
 
-      char *labels[99] = {nullptr};
+      static constexpr int MAX_LABELS = 99;
+      char *labels[MAX_LABELS] = {nullptr};
 
       uint16_t maxClients = DEFAULT_MAX_WS_CLIENTS;
       static constexpr int BUFFER_SIZE = 256;

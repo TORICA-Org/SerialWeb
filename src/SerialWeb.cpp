@@ -8,14 +8,11 @@ namespace SWNamespace {
   #include "assets/index.h"
 #endif
 
-  SWClass *SWClass::instance = nullptr;
   AsyncWebServer SWClass::server(80); // HTTPサーバーインスタンスの定義
   AsyncWebSocket SWClass::ws("/ws"); // WebSocketエンドポイントの設定
   DNSServer SWClass::dns; // DNSサーバーインスタンスの定義
 
   SWClass::SWClass () {
-    instance = this;
-
     rx_buffer1[0] = '\0';
     rx_buffer2[0] = '\0';
     writing = rx_buffer1;
@@ -50,12 +47,12 @@ namespace SWNamespace {
   }
 
 
-  void SWClass::begin (const IPAddress AP_IP, const byte DNS_PORT) {
+  void SWClass::begin (const IPAddress IP, const byte DNS_PORT) {
     ws.onEvent(
-      [](AsyncWebSocket *server, AsyncWebSocketClient *client,
+      [this](AsyncWebSocket *server, AsyncWebSocketClient *client,
         AwsEventType type, void *arg, uint8_t *data, size_t len)
       {
-        instance->handleWsEvent(server, client, type, arg, data, len); // WebSocketイベントハンドラの登録
+        this->handleWsEvent(server, client, type, arg, data, len); // WebSocketイベントハンドラの登録
       }
     );
     // Serial.println("WebSocket server started.");
@@ -73,19 +70,19 @@ namespace SWNamespace {
     );
   
     dns.setErrorReplyCode(DNSReplyCode::NoError); // DNSエラーコードの設定
-    dns.start(DNS_PORT, "*", AP_IP); // DNSサーバーの開始
+    dns.start(DNS_PORT, "*", IP); // DNSサーバーの開始
     // Serial.println("DNS server started.");
 
     server.on("/", HTTP_GET,
-      [](AsyncWebServerRequest *request) {instance->handleRoot(request);}); // ルートハンドラの登録
+      [this](AsyncWebServerRequest *request) {this->handleRoot(request);}); // ルートハンドラの登録
     server.on("/generate_204", HTTP_GET,
-      [](AsyncWebServerRequest *request) {instance->handleRoot(request);}); // Android Captive Portal対応
+      [this](AsyncWebServerRequest *request) {this->handleRoot(request);}); // Android Captive Portal対応
     server.on("/fwlink", HTTP_GET,
-      [](AsyncWebServerRequest *request) {instance->handleRoot(request);}); // Windows Captive Portal対応
+      [this](AsyncWebServerRequest *request) {this->handleRoot(request);}); // Windows Captive Portal対応
     server.onNotFound(
-      [](AsyncWebServerRequest *request) {instance->handleRoot(request);}); // その他のリクエストはすべてルートへ誘導
+      [this](AsyncWebServerRequest *request) {this->handleRoot(request);}); // その他のリクエストはすべてルートへ誘導
     server.on("/send", HTTP_GET,
-      [](AsyncWebServerRequest *request) {instance->receiveHttp(request);}); // iOSからはHTTPで受信
+      [this](AsyncWebServerRequest *request) {this->receiveHttp(request);}); // iOSからはHTTPで受信
 
     server.addHandler(&ws); // WebSocketハンドラの追加
 
