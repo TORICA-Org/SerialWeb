@@ -12,8 +12,19 @@
 
 #include <Arduino.h>
 #include <Print.h>
-#include <ESPAsyncWebServer.h>
+
 #include <DNSServer.h>
+#if defined(ESP32) || defined(LIBRETINY)
+#include <AsyncTCP.h>
+#include <WiFi.h>
+#elif defined(ESP8266)
+#include <ESP8266WiFi.h>
+#include <ESPAsyncTCP.h>
+#elif defined(TARGET_RP2040) || defined(TARGET_RP2350) || defined(PICO_RP2040) || defined(PICO_RP2350)
+#include <RPAsyncTCP.h>
+#include <WiFi.h>
+#endif
+#include <ESPAsyncWebServer.h>
 
 namespace SWNamespace {
   
